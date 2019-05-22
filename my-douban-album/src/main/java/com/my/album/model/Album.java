@@ -31,7 +31,7 @@ public class Album {
 	}
 
 	public void parse(IProgressMonitor monitor) throws MalformedURLException, IOException {
-		Document document = Jsoup.parse(new URL(urlStr), 5 * 1000);
+		Document document = Jsoup.parse(createUrl(urlStr), 5 * 1000);
 		this.albumName = document.selectFirst("#content").select("h1").text();
 
 		Integer pagesSize = 1;
@@ -45,6 +45,18 @@ public class Album {
 		System.out.println(log);
 
 		parseCurrentPage(urlStr, monitor);
+	}
+
+	private URL createUrl(String urlStr) throws MalformedURLException {
+		try {
+			URL url = new URL(urlStr);
+			if (!url.getHost().equals("movie.douban.com") || !url.getPath().endsWith("/photos")) {
+				throw new MalformedURLException("请输入douban电影地址. 如https://movie.douban.com/celebrity/1052297/photos/");
+			}
+			return url;
+		} catch (Exception e) {
+			throw new MalformedURLException("请输入douban电影地址. 如https://movie.douban.com/celebrity/1052297/photos/");
+		}
 	}
 
 	private void parseCurrentPage(String currentPageUrl, IProgressMonitor monitor) throws IOException {
@@ -133,12 +145,4 @@ public class Album {
 		monitor.done();
 	}
 
-	public static void main(String[] args) throws MalformedURLException, IOException {
-		String urlStr = "https://movie.douban.com/subject/30353357/photos?type=S";
-
-		Album album = new Album(urlStr);
-		album.parse(null);
-		album.getPages().forEach(System.out::println);
-		System.out.println(album.getAlbumName());
-	}
 }

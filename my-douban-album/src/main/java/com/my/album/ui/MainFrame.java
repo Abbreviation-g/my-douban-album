@@ -2,8 +2,6 @@ package com.my.album.ui;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 
@@ -41,7 +39,7 @@ public class MainFrame {
 	}
 
 	public void createContent() {
-		parentShell.setText("豆瓣相册下载器");
+		parentShell.setText("豆瓣电影相册下载器");
 		
 		ImageDescriptor imageDescriptor = ImageDescriptor.createFromFile(MainFrame.class, "/group_5_copy.png");
 		parentShell.setImage(imageDescriptor.createImage());
@@ -109,9 +107,8 @@ public class MainFrame {
 		consoleGD.minimumHeight = 400;
 		consoleText.setLayoutData(consoleGD);
 
-		ConsolePrintStream stream = new ConsolePrintStream(System.out, consoleText);
-		System.setOut(stream);
-		System.setErr(stream);
+		System.setOut(new CommonPrintStream(System.out, consoleText));
+		System.setErr(new ErrorPrintStream(System.err, consoleText));
 	}
 
 	private boolean validOk() {
@@ -172,7 +169,7 @@ public class MainFrame {
 						album.downloadPages(monitor, new File(outputPath, album.getAlbumName()));
 					}
 				} catch (MalformedURLException e) {
-					e.printStackTrace();
+					System.err.println(e.getMessage());
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -203,34 +200,5 @@ public class MainFrame {
 			}
 		}
 		display.dispose();
-	}
-}
-
-/**
- * 定义一个PrintStream子类,将打印语句输出流重定向到Text组件中显示
- * 
- * @author guo
- *
- */
-class ConsolePrintStream extends PrintStream {
-
-	private Text text;
-
-	public ConsolePrintStream(OutputStream out, Text text) {
-		super(out);
-		this.text = text;
-	}
-
-	/**
-	 * 重写父类write方法,这个方法是所有打印方法里面都要调用的方法
-	 */
-	public void write(byte[] buf, int off, int len) {
-		final String message = new String(buf, off, len);
-		Display.getDefault().syncExec(() -> {
-			// 把信息添加到组件中
-			if (text != null && !text.isDisposed()) {
-				text.append(message);
-			}
-		});
 	}
 }
