@@ -34,9 +34,12 @@ public class Album {
 		Document document = Jsoup.parse(new URL(urlStr), 5 * 1000);
 		this.albumName = document.selectFirst("#content").select("h1").text();
 
+		Integer pagesSize = 1;
 		Element paginator = document.selectFirst(".paginator");
-		Elements paginatorChildren = paginator.children();
-		Integer pagesSize = Integer.parseInt(paginatorChildren.get(paginatorChildren.size() - 3).text());
+		if (paginator != null) {
+			Elements paginatorChildren = paginator.children();
+			pagesSize = Integer.parseInt(paginatorChildren.get(paginatorChildren.size() - 3).text());
+		}
 		String log = "正在解析相册: " + this.albumName;
 		monitor.beginTask(log, pagesSize);
 		System.out.println(log);
@@ -51,18 +54,21 @@ public class Album {
 		URL url = new URL(currentPageUrl);
 		Document document = Jsoup.parse(url, 10 * 1000);
 		Element thisPageEle = document.selectFirst(".thispage");
-		if (thisPageEle == null)
-			return;
+		Integer pageNumber = 1;
+		if (thisPageEle != null) {
+			pageNumber = Integer.parseInt(thisPageEle.text());
+		}
 
-		Integer pageNumber = Integer.parseInt(thisPageEle.text());
 		AlbumPage page = new AlbumPage(pageNumber, currentPageUrl);
 		page.parsePage(monitor);
 		this.pages.add(page);
 		monitor.worked(1);
 
-		Element nextUrlA = thisPageEle.nextElementSibling();
-		if (nextUrlA.tagName().equals("a")) {
-			parseCurrentPage(nextUrlA.attr("href"), monitor);
+		if (thisPageEle != null) {
+			Element nextUrlA = thisPageEle.nextElementSibling();
+			if (nextUrlA.tagName().equals("a")) {
+				parseCurrentPage(nextUrlA.attr("href"), monitor);
+			}
 		}
 	}
 
@@ -95,7 +101,7 @@ public class Album {
 	public void downloadPagesMultiThread(Shell parentShell, IProgressMonitor monitor, File outputFolder)
 			throws InvocationTargetException, InterruptedException {
 
-		monitor.beginTask("正在下载"+this.albumName, this.pages.size());
+		monitor.beginTask("正在下载" + this.albumName, this.pages.size());
 		for (AlbumPage albumPage : pages) {
 			if (monitor.isCanceled())
 				break;
