@@ -33,6 +33,7 @@ public class MainFrame {
 	private Text pathText;
 	
 	private Text consoleText;
+	private Button multiThreadBtn;
 	private Button okButton;
 
 	public MainFrame(Shell shell) {
@@ -40,6 +41,8 @@ public class MainFrame {
 	}
 
 	public void createContent() {
+		parentShell.setText("豆瓣相册下载器");
+		
 		ImageDescriptor imageDescriptor = ImageDescriptor.createFromFile(MainFrame.class, "/group_5_copy.png");
 		parentShell.setImage(imageDescriptor.createImage());
 		GridLayout shellLayout = new GridLayout();
@@ -123,12 +126,18 @@ public class MainFrame {
 
 	protected Control createButtonBar(Composite parent) {
 		Composite composite = new Composite(parent, SWT.NONE);
-		composite.setLayoutData(new GridData(GridData.END, GridData.END, true, true));
-		composite.setLayout(new GridLayout(2, false));
+		composite.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+		composite.setLayout(new GridLayout(3, false));
 
+		this.multiThreadBtn = new Button(composite, SWT.CHECK);
+		multiThreadBtn.setText("多线程下载");
+		multiThreadBtn.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
+		
+		new Label(composite, SWT.NONE).setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		
 		okButton = new Button(composite, SWT.PUSH);
-		okButton.setText("Ok");
-		GridData okGD = new GridData(GridData.END, GridData.END, true, false);
+		okButton.setText("Download");
+		GridData okGD = new GridData(GridData.END, GridData.END, false, false);
 		okGD.minimumWidth = 100;
 		okButton.setLayoutData(okGD);
 		validOk();
@@ -148,7 +157,8 @@ public class MainFrame {
 	private void startDownload() {
 		String urlStr = urlText.getText();
 		String outputPath = pathText.getText();
-
+		boolean isMultiThread = multiThreadBtn.getSelection();
+		
 		okButton.setEnabled(false);
 		ProgressMonitorDialog dialog = new ProgressMonitorDialog(parentShell);
 		try {
@@ -156,20 +166,23 @@ public class MainFrame {
 				try {
 					Album album = new Album(urlStr);
 					album.parse(monitor);
-					
-					album.downloadPages(monitor, new File(outputPath, album.getAlbumName()));
+					if(isMultiThread) {
+						album.downloadPagesMultiThread(parentShell, monitor, new File(outputPath, album.getAlbumName()));
+					} else {
+						album.downloadPages(monitor, new File(outputPath, album.getAlbumName()));
+					}
 				} catch (MalformedURLException e) {
 					e.printStackTrace();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			});
-			okButton.setEnabled(true);
 		} catch (InvocationTargetException e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		okButton.setEnabled(true);
 	}
 
 	public static void main(String[] args) throws ClassNotFoundException {

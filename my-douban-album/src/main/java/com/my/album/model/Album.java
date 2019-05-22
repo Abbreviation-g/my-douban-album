@@ -2,12 +2,15 @@ package com.my.album.model;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.dialogs.ProgressMonitorDialog;
+import org.eclipse.swt.widgets.Shell;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -87,6 +90,41 @@ public class Album {
 			}
 			monitor.done();
 		}
+	}
+
+	public void downloadPagesMultiThread(Shell parentShell, IProgressMonitor monitor, File outputFolder)
+			throws InvocationTargetException, InterruptedException {
+
+		monitor.beginTask("正在下载"+this.albumName, this.pages.size());
+		for (AlbumPage albumPage : pages) {
+			if (monitor.isCanceled())
+				break;
+			monitor.subTask(albumPage.getPageUrl());
+			parentShell.getDisplay().asyncExec(() -> {
+				ProgressMonitorDialog dialog = new ProgressMonitorDialog(new Shell(parentShell));
+				try {
+					dialog.run(true, true, (subMonitor) -> {
+						List<String> imgUrlList = albumPage.getImgUrlList();
+						String log = "开始下载第" + albumPage.getPageNumber() + "页. ";
+						subMonitor.beginTask(log, imgUrlList.size());
+						for (String imgUrl : imgUrlList) {
+							subMonitor.subTask(imgUrl);
+							if (subMonitor.isCanceled())
+								break;
+							DownloadUtil.download(imgUrl, outputFolder);
+							subMonitor.worked(1);
+						}
+						subMonitor.done();
+						monitor.worked(1);
+					});
+				} catch (InvocationTargetException e) {
+					e.printStackTrace();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			});
+		}
+		monitor.done();
 	}
 
 	public static void main(String[] args) throws MalformedURLException, IOException {
