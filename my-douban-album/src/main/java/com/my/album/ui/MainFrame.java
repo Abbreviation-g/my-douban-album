@@ -1,18 +1,17 @@
-package com.my.album;
+package com.my.album.ui;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.List;
+import java.lang.reflect.InvocationTargetException;
+import java.net.MalformedURLException;
 
-import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.ShellAdapter;
-import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -25,6 +24,8 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
+import com.my.album.model.Album;
+
 public class MainFrame {
 	private Shell parentShell;
 
@@ -33,9 +34,6 @@ public class MainFrame {
 	
 	private Text consoleText;
 	private Button okButton;
-	private Button cancelBtn;
-
-	private Thread downloadThread;
 
 	public MainFrame(Shell shell) {
 		this.parentShell = shell;
@@ -105,7 +103,7 @@ public class MainFrame {
 		group.setText("Console");
 		consoleText = new Text(group, SWT.MULTI | SWT.WRAP | SWT.V_SCROLL | SWT.H_SCROLL);
 		GridData consoleGD = new GridData(SWT.FILL, SWT.FILL, true, true);
-		consoleGD.minimumHeight = 300;
+		consoleGD.minimumHeight = 400;
 		consoleText.setLayoutData(consoleGD);
 
 		ConsolePrintStream stream = new ConsolePrintStream(System.out, consoleText);
@@ -144,66 +142,34 @@ public class MainFrame {
 			}
 		});
 
-		cancelBtn = new Button(composite, SWT.PUSH);
-		cancelBtn.setText("Cancel");
-		GridData cancelGD = new GridData(GridData.END, GridData.END, true, false);
-		cancelGD.minimumWidth = 100;
-		cancelBtn.setLayoutData(cancelGD);
-		cancelBtn.setEnabled(false);
-		cancelBtn.addSelectionListener(new SelectionAdapter() {
-			@SuppressWarnings("deprecation")
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				if(downloadThread != null && downloadThread.isAlive()) {
-					downloadThread.stop();
-				}
-			}
-		});
 		return composite;
 	}
 
 	private void startDownload() {
-		cancelBtn.setEnabled(true);
-		okButton.setEnabled(false);
 		String urlStr = urlText.getText();
 		String outputPath = pathText.getText();
 
-		downloadThread = new Thread(() -> {
-			try {
-				ParsePage parsePage = new ParsePage(urlStr);
-				File outputFolder = new File(outputPath, parsePage.getAlbumName());
-				List<String> imgUrlList = parsePage.getImgUrlList();
-				for (String urlStr0 : imgUrlList) {
-					DownloadUtil.download(urlStr0, outputFolder);
+		okButton.setEnabled(false);
+		ProgressMonitorDialog dialog = new ProgressMonitorDialog(parentShell);
+		try {
+			dialog.run(true, true, (monitor) ->{
+				try {
+					Album album = new Album(urlStr);
+					album.parse(monitor);
+					
+					album.downloadPages(monitor, new File(outputPath, album.getAlbumName()));
+				} catch (MalformedURLException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
-			} catch (IOException e) {
-				e.printStackTrace();
-				parentShell.getDisplay().asyncExec(() -> {
-					MessageDialog.openInformation(parentShell, "Download", "Done Fail!");
-					consoleText.append("------------------------"+"Done Fail!" +"------------------------" +"\n");
-				});
-				return;
-			} finally {
-				parentShell.getDisplay().asyncExec(() -> {
-					cancelBtn.setEnabled(false);
-					okButton.setEnabled(true);
-				});
-			}
-			parentShell.getDisplay().asyncExec(() -> {
-				MessageDialog.openInformation(parentShell, "Download", "Done! ");
-				consoleText.append("------------------------"+"Done" +"------------------------" +"\n");
 			});
-		});
-		downloadThread.start();
-		parentShell.addShellListener(new ShellAdapter() {
-			@Override
-			public void shellClosed(ShellEvent e) {
-				if (downloadThread.isAlive() && !MessageDialog.openQuestion(parentShell, "Question",
-						" Download in progress, would you like to close anyway?")) {
-					e.doit = false;
-				}
-			}
-		});
+			okButton.setEnabled(true);
+		} catch (InvocationTargetException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public static void main(String[] args) throws ClassNotFoundException {
