@@ -70,11 +70,8 @@ public class MainFrame {
 		urlGD.minimumWidth = 600;
 		urlText.setLayoutData(urlGD);
 		new Label(mainComposite, SWT.NONE);
-		urlText.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				validOk();
-			}
+		urlText.addModifyListener((e)->{
+			validOk();
 		});
 
 		new Label(mainComposite, SWT.NONE).setText("Save Path: ");
@@ -87,6 +84,9 @@ public class MainFrame {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				DirectoryDialog dialog = new DirectoryDialog(e.widget.getDisplay().getActiveShell());
+				dialog.setText("选择文件夹");
+				dialog.setMessage("选择下载图片保存路径");
+				dialog.setFilterPath(new File("").getAbsolutePath());
 				String path = dialog.open();
 				if (path != null) {
 					pathText.setText(path);
