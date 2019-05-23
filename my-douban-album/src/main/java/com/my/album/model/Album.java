@@ -53,7 +53,7 @@ public class Album {
 		try {
 			URL url = new URL(urlStr);
 			IPath urlPath = new Path(url.getPath());
-			if (!url.getHost().equals("movie.douban.com") || urlPath.lastSegment().equals("photos")) {
+			if (!url.getHost().equals("movie.douban.com") || !urlPath.lastSegment().equals("photos")) {
 				throw new MalformedURLException("请输入douban电影地址. 如https://movie.douban.com/celebrity/1052297/photos/");
 			}
 			return url;
