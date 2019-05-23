@@ -8,7 +8,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.jsoup.Jsoup;
@@ -50,7 +52,8 @@ public class Album {
 	private URL createUrl(String urlStr) throws MalformedURLException {
 		try {
 			URL url = new URL(urlStr);
-			if (!url.getHost().equals("movie.douban.com") || !url.getPath().endsWith("/photos")) {
+			IPath urlPath = new Path(url.getPath());
+			if (!url.getHost().equals("movie.douban.com") || urlPath.lastSegment().equals("photos")) {
 				throw new MalformedURLException("请输入douban电影地址. 如https://movie.douban.com/celebrity/1052297/photos/");
 			}
 			return url;
