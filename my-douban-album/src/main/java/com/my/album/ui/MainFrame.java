@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
+import java.net.URL;
 
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -116,9 +117,19 @@ public class MainFrame {
 			okButton.setEnabled(false);
 			return false;
 		} else {
-			okButton.setEnabled(true);
+			try {
+				if (new URL(urlText.getText()).getHost().equals("thehentaiworld.com")) {
+					okButton.setEnabled(true);
+					return true;
+				} else {
+					okButton.setEnabled(false);
+					return false;
+				}
+			} catch (Exception e) {
+				okButton.setEnabled(false);
+				return false;
+			}
 		}
-		return true;
 	}
 
 	protected Control createButtonBar(Composite parent) {
