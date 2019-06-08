@@ -118,7 +118,7 @@ public class MainFrame {
 			return false;
 		} else {
 			try {
-				if (new URL(urlText.getText()).getHost().equals("thehentaiworld.com")) {
+				if (new URL(urlText.getText()).getHost().equals("movie.douban.com")) {
 					okButton.setEnabled(true);
 					return true;
 				} else {
