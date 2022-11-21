@@ -25,8 +25,10 @@ public class AlbumPage {
 
 	public void parsePage(IProgressMonitor monitor) throws IOException {
 		
-		URL url = new URL(pageUrl);
-		Document document = Jsoup.parse(url, 10 * 1000);
+		Document document = Album.getDocument(pageUrl);
+		if(document == null) {
+			return;
+		}
 		Elements coverEles = document.select(".cover");
 		String log = "正在解析第"+pageNumber+"页. ";
 		System.out.println(log);

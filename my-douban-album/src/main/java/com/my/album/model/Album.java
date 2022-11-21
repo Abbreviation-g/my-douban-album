@@ -4,15 +4,13 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.swt.widgets.Shell;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -21,6 +19,9 @@ import org.jsoup.select.Elements;
 import com.my.album.util.DownloadUtil;
 
 public class Album {
+
+	private static final int PAGE_RECURSION_LENGTH = 100;
+	private int currentPageIndex = 0;
 
 	private String urlStr;
 
@@ -33,7 +34,11 @@ public class Album {
 	}
 
 	public void parse(IProgressMonitor monitor) throws MalformedURLException, IOException {
-		Document document = Jsoup.parse(createUrl(urlStr), 5 * 1000);
+		Document document = getDocument(urlStr);
+		if (document == null) {
+			return;
+		}
+
 		this.albumName = document.selectFirst("#content").select("h1").text();
 
 		Integer pagesSize = 1;
@@ -49,25 +54,35 @@ public class Album {
 		parseCurrentPage(urlStr, monitor);
 	}
 
-	private URL createUrl(String urlStr) throws MalformedURLException {
+	public static Connection createConnection(String url) {
+		Connection connection = Jsoup.connect(url).header("User-Agent",
+				"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36")
+				.header("Referer", "https://movie.douban.com/celebrity/1034637/").header("Host", "movie.douban.com");
+		return connection;
+	}
+
+	public static Document getDocument(String url) throws IOException {
 		try {
-			URL url = new URL(urlStr);
-			IPath urlPath = new Path(url.getPath());
-			if (!url.getHost().equals("movie.douban.com") || !urlPath.lastSegment().equals("photos")) {
-				throw new MalformedURLException("请输入douban电影地址. 如https://movie.douban.com/celebrity/1052297/photos/");
-			}
-			return url;
+			Connection connection = createConnection(url);
+			Document document = connection.get();
+			return document;
 		} catch (Exception e) {
-			throw new MalformedURLException("请输入douban电影地址. 如https://movie.douban.com/celebrity/1052297/photos/");
+			e.printStackTrace();
+			return null;
 		}
 	}
 
 	private void parseCurrentPage(String currentPageUrl, IProgressMonitor monitor) throws IOException {
 		if (monitor.isCanceled())
 			return;
-
-		URL url = new URL(currentPageUrl);
-		Document document = Jsoup.parse(url, 10 * 1000);
+		currentPageIndex++;
+		if (currentPageIndex > PAGE_RECURSION_LENGTH) {
+			return;
+		}
+		Document document = getDocument(currentPageUrl);
+		if (document == null) {
+			return;
+		}
 		Element thisPageEle = document.selectFirst(".thispage");
 		Integer pageNumber = 1;
 		if (thisPageEle != null) {
@@ -148,4 +163,12 @@ public class Album {
 		monitor.done();
 	}
 
+	public static void main(String[] args) throws IOException {
+		String urlStr = "https://movie.douban.com/celebrity/1034637/photos/";
+		Connection connection = Jsoup.connect(urlStr).header("User-Agent",
+				"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36")
+				.header("Referer", "https://movie.douban.com/celebrity/1034637/").header("Host", "movie.douban.com");
+		Document document = connection.get();
+		System.out.println(document);
+	}
 }

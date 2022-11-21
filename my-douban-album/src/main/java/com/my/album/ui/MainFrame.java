@@ -108,8 +108,8 @@ public class MainFrame {
 		consoleGD.minimumHeight = 400;
 		consoleText.setLayoutData(consoleGD);
 
-		System.setOut(new CommonPrintStream(System.out, consoleText));
-		System.setErr(new ErrorPrintStream(System.err, consoleText));
+//		System.setOut(new CommonPrintStream(System.out, consoleText));
+//		System.setErr(new ErrorPrintStream(System.err, consoleText));
 	}
 
 	private boolean validOk() {
