@@ -34,6 +34,8 @@ public class MainFrame {
 	private Text consoleText;
 	private Button multiThreadBtn;
 	private Button okButton;
+	
+	private String mainUrlStr;
 
 	public MainFrame(Shell shell) {
 		this.parentShell = shell;
@@ -113,23 +115,24 @@ public class MainFrame {
 	}
 
 	private boolean validOk() {
-		if (urlText.getText().isEmpty() || pathText.getText().isEmpty()) {
-			okButton.setEnabled(false);
-			return false;
-		} else {
-			try {
-				if (new URL(urlText.getText()).getHost().equals("movie.douban.com")) {
-					okButton.setEnabled(true);
-					return true;
-				} else {
-					okButton.setEnabled(false);
-					return false;
-				}
-			} catch (Exception e) {
-				okButton.setEnabled(false);
-				return false;
-			}
-		}
+//		if (urlText.getText().isEmpty() || pathText.getText().isEmpty()) {
+//			okButton.setEnabled(false);
+//			return false;
+//		} else {
+//			try {
+//				if (new URL(urlText.getText()).getHost().equals("movie.douban.com")) {
+//					okButton.setEnabled(true);
+//					return true;
+//				} else {
+//					okButton.setEnabled(false);
+//					return false;
+//				}
+//			} catch (Exception e) {
+//				okButton.setEnabled(false);
+//				return false;
+//			}
+//		}
+		return true;
 	}
 
 	protected Control createButtonBar(Composite parent) {
@@ -163,7 +166,7 @@ public class MainFrame {
 	}
 
 	private void startDownload() {
-		String urlStr = urlText.getText();
+		this.mainUrlStr = urlText.getText();
 		String outputPath = pathText.getText();
 		boolean isMultiThread = multiThreadBtn.getSelection();
 		
@@ -172,7 +175,7 @@ public class MainFrame {
 		try {
 			dialog.run(true, true, (monitor) ->{
 				try {
-					Album album = new Album(urlStr);
+					Album album = new Album(mainUrlStr, mainUrlStr);
 					album.parse(monitor);
 					if(isMultiThread) {
 						album.downloadPagesMultiThread(parentShell, monitor, new File(outputPath, album.getAlbumName()));

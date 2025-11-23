@@ -2,3 +2,5 @@
 /my-douban-album/target
 /my-douban-album/*.project
 /my-douban-album/.settings
+.metadata/
+

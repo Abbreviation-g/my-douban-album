@@ -5,8 +5,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
+import java.net.Proxy;
 import java.net.URL;
+import java.net.Proxy.Type;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -46,7 +49,42 @@ public class DownloadUtil {
 		}
 	}
 	
-	public static void main(String[] args) throws IOException {
+	public static void downloadWithProxy(String urlStr, File outputFolder) {
+		String fileName = urlStr.substring(urlStr.lastIndexOf("/") + 1, urlStr.length());
+		File imgFile = new File(outputFolder, fileName);
+		if (imgFile.exists()) {
+			System.out.println(imgFile + " already exists. ");
+			return;
+		}
+		try {
+			URL url = new URL(urlStr);
+			Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 10809));
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
+			
+			connection.setRequestProperty("Referer", "https://www.douban.com/");
+			connection.setRequestProperty("User-Agent","Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36");
+			connection.setRequestProperty("Host", "movie.douban.com");
+			InputStream inputStream = connection.getInputStream();
+			if (!outputFolder.exists())
+				outputFolder.mkdirs();
+			FileOutputStream writer = new FileOutputStream(imgFile);
+			byte[] data = new byte[1024];
+			int n = 0;
+			while ((n = inputStream.read(data)) != -1) {
+				writer.write(data, 0, n);
+			}
+			inputStream.close();
+			writer.close();
+
+			System.out.println("Download " + imgFile + " is done. ");
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void main2(String[] args) throws IOException {
 		String listLogFilePath = "G:\\女星\\欧美\\布丽·拉尔森 Brie Larson的图片\\list.log";
 		File listLogFile = new File(listLogFilePath);
 		File outputFolder = listLogFile.getParentFile();
@@ -59,5 +97,11 @@ public class DownloadUtil {
 				continue;
 			}
 		}
+	}
+	
+	public static void main(String[] args) throws IOException {
+		String urlStr = "https://files.everiaclub.com/2023/04/02/9b80eefffacb4f4f80a4c6d71e7e4e48.jpg";
+		File outputFolder = new File("F:\\everiaclub-output\\Umi Yatsugake 八掛うみ\\Umi Yatsugake 八掛うみ, [Graphis] Gals 「Girl like a doll」 Making");
+		downloadWithProxy(urlStr, outputFolder);
 	}
 }

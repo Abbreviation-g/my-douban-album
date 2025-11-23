@@ -1,12 +1,10 @@
 package com.my.album.model;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -24,22 +22,36 @@ public class AlbumPage {
 	}
 
 	public void parsePage(IProgressMonitor monitor) throws IOException {
-		
+
 		Document document = Album.getDocument(pageUrl);
-		if(document == null) {
+		if (document == null) {
 			return;
 		}
-		Elements coverEles = document.select(".cover");
-		String log = "正在解析第"+pageNumber+"页. ";
+		Elements picsEles = document.getElementsByClass("pics");
+		if (picsEles.isEmpty()) {
+			return;
+		}
+		
+		Element picEle = picsEles.get(0);
+		Elements children = picEle.children();
+		
+		String log = "正在解析第" + pageNumber + "页. ";
 		System.out.println(log);
-		monitor.beginTask(log, coverEles.size());
+		monitor.beginTask(log, children.size());
 		monitor.subTask(pageUrl);
-		for (Element element : coverEles) {
-			if(monitor.isCanceled())
-				break;
-			String imgUrl = element.select("img").attr("src").replace("view/photo/m/public", "view/photo/raw/public");
-			imgUrlList.add(imgUrl);
-			System.out.println(imgUrl);
+		
+		for (Element ele : children) {
+			Elements imgEles = ele.getElementsByTag("img");
+			if (imgEles.isEmpty()) {
+				continue;
+			}
+			Element imgEle = imgEles.get(0);
+			String href = imgEle.attr("src");
+			href = href.replace("photo/photo", "photo/raw");
+			href = href.replace("webp", "jpg");
+			System.out.println(href);
+			
+			imgUrlList.add(href);
 			monitor.worked(1);
 		}
 	}
@@ -55,7 +67,7 @@ public class AlbumPage {
 	public List<String> getImgUrlList() {
 		return imgUrlList;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "AlbumPage [pageNumber=" + pageNumber + ", pageUrl=" + pageUrl + "]";

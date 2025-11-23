@@ -28,8 +28,11 @@ public class Album {
 	private String albumName;
 	private List<AlbumPage> pages;
 
-	public Album(String urlStr) {
+	private final String mainUrlStr;
+
+	public Album(String urlStr, String mainUrlStr) {
 		this.urlStr = urlStr;
+		this.mainUrlStr = mainUrlStr;
 		this.pages = new ArrayList<>();
 	}
 
@@ -55,9 +58,9 @@ public class Album {
 	}
 
 	public static Connection createConnection(String url) {
-		Connection connection = Jsoup.connect(url).header("User-Agent",
-				"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36")
-				.header("Referer", "https://movie.douban.com/celebrity/1034637/").header("Host", "movie.douban.com");
+		Connection connection = Jsoup.connect(url).header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36").header("Referer", "https://movie.douban.com/celebrity/1488664/").header("Host", "movie.douban.com")
+				.header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7").header("Cookie",
+						"bid=Ef4YD7IrBPc; __utmz=30149280.1698996202.1.1.utmcsr=baidu|utmccn=(organic)|utmcmd=organic; ll=\"108288\"; _pk_id.100001.4cf6=e82fefaa1e9d657c.1698996243.; __utmc=30149280; __utmc=223695111; viewed=\"4303940\"; ap_v=0,6.0; __utma=30149280.1039221912.1698996202.1700626047.1700634410.5; __utmt=1; __utmb=30149280.1.10.1700634410; __utma=223695111.155290496.1698996243.1700626406.1700634433.4; __utmz=223695111.1700634433.4.3.utmcsr=search.douban.com|utmccn=(referral)|utmcmd=referral|utmcct=/movie/subject_search; _pk_ref.100001.4cf6=%5B%22%22%2C%22%22%2C1700634433%2C%22https%3A%2F%2Fsearch.douban.com%2Fmovie%2Fsubject_search%3Fsearch_text%3D%E9%99%88%E9%9B%A8%E9%94%B6%26cat%3D1002%22%5D; _pk_ses.100001.4cf6=1; __utmb=223695111.5.10.1700634433");
 		return connection;
 	}
 
@@ -97,7 +100,9 @@ public class Album {
 		if (thisPageEle != null) {
 			Element nextUrlA = thisPageEle.nextElementSibling();
 			if (nextUrlA.tagName().equals("a")) {
-				parseCurrentPage(nextUrlA.attr("href"), monitor);
+				String nextHref = nextUrlA.attr("href");
+				nextHref = mainUrlStr + nextHref;
+				parseCurrentPage(nextHref, monitor);
 			}
 		}
 	}
@@ -128,8 +133,7 @@ public class Album {
 		}
 	}
 
-	public void downloadPagesMultiThread(Shell parentShell, IProgressMonitor monitor, File outputFolder)
-			throws InvocationTargetException, InterruptedException {
+	public void downloadPagesMultiThread(Shell parentShell, IProgressMonitor monitor, File outputFolder) throws InvocationTargetException, InterruptedException {
 
 		monitor.beginTask("正在下载" + this.albumName, this.pages.size());
 		for (AlbumPage albumPage : pages) {
@@ -165,9 +169,7 @@ public class Album {
 
 	public static void main(String[] args) throws IOException {
 		String urlStr = "https://movie.douban.com/celebrity/1034637/photos/";
-		Connection connection = Jsoup.connect(urlStr).header("User-Agent",
-				"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36")
-				.header("Referer", "https://movie.douban.com/celebrity/1034637/").header("Host", "movie.douban.com");
+		Connection connection = Jsoup.connect(urlStr).header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36").header("Referer", "https://movie.douban.com/celebrity/1034637/").header("Host", "movie.douban.com");
 		Document document = connection.get();
 		System.out.println(document);
 	}
